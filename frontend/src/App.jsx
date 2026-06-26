@@ -1,69 +1,32 @@
-import { useState } from "react";
-import axios from "axios";
-import "./App.css";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 
 function App() {
-  const [nome, setNome] = useState("");
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
 
-  async function cadastrar(e) {
-    e.preventDefault();
+    return (
 
-    try {
+        <BrowserRouter>
 
-      const resposta = await axios.post(
-        "http://localhost:8000/cadastro",
-        {
-          nome,
-          email,
-          senha,
-        }
-      );
+            <Routes>
 
-      alert(resposta.data.mensagem);
+                <Route
+                    path="/"
+                    element={<Login />}
+                />
 
-      setNome("");
-      setEmail("");
-      setSenha("");
-    } catch (erro) {
-      console.error(erro);
-      alert("Erro ao cadastrar usuário");
-    }
-  }
+                <Route
+                    path="/dashboard"
+                    element={<Dashboard />}
+                />
 
-  return (
-    <div className="container">
-      <form className="card" onSubmit={cadastrar}>
-        <h1>Academia App</h1>
+            </Routes>
 
-        <input
-          type="text"
-          placeholder="Nome"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
+        </BrowserRouter>
 
-        <input
-          type="email"
-          placeholder="E-mail"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+    )
 
-        <input
-          type="password"
-          placeholder="Senha"
-          value={senha}
-          onChange={(e) => setSenha(e.target.value)}
-        />
-
-        <button type="submit">
-          Criar Conta
-        </button>
-      </form>
-    </div>
-  );
 }
 
 export default App;

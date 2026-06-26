@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine
-from modelos import Base
 from rotas.auth import router
+from database import Base 
 
 Base.metadata.create_all(bind=engine)
 

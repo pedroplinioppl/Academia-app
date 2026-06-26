@@ -57,3 +57,18 @@ body {
 
   font-weight: bold;
 }
+
+.troca-form{
+    margin-top:20px;
+    text-align:center;
+}
+
+.troca-form span{
+    color:#007bff;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.troca-form span:hover{
+    text-decoration:underline;
+}

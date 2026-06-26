@@ -1,2 +1,4 @@
 /backend/venv
 /backend/__pycache__/
+/backend/rotas/__pycache__/
+/backend/models/__pycache__/
