@@ -52,7 +52,7 @@ def login_usuario(usuario: UsuarioLogin):
     
     usuario_db = db.query(Usuario).filter(Usuario.email == usuario.email).first()
     
-    if not usuario_db or not pwd_context.verify(usuario.senha, usuario_db.senha):
+    if not usuario_db or not pwd_context.verify(usuario.senha, usuario_db.senha_hash):
         return {"mensagem": "Credenciais inválidas"}
     
     token = criar_token(usuario_db.id)
