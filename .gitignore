@@ -2,3 +2,8 @@
 /backend/__pycache__/
 /backend/rotas/__pycache__/
 /backend/models/__pycache__/
+/backend/schemas/__pycache__/
+/backend/uploads
+/backup
+/functions/__pycache__/
+teste.py

@@ -10,7 +10,7 @@ class Perfil(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     usuario_id = Column(
-        Integer,
+        Integer, 
         ForeignKey("usuario.id"),
         unique=True,
         nullable=False

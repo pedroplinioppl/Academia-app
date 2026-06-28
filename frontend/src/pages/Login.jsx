@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Login.css";
@@ -24,8 +24,6 @@ function App() {
         }
       );
 
-      alert(resposta.data.mensagem);
-
       localStorage.setItem(
         "token",
         resposta.data.access_token
@@ -38,7 +36,7 @@ function App() {
       navigate("/dashboard")
     } catch (erro) {
       console.error(erro);
-      alert("Erro ao cadastrar usuário");
+      alert("Erro ao cadastrar usuário: " + erro.response.data.detail);
     }
   }
 
@@ -58,9 +56,6 @@ function App() {
           "token",
           resposta.data.access_token
       )
-      
-
-      alert(resposta.data.mensagem);
 
       setUsuario("");
       setSenha("");
@@ -68,9 +63,17 @@ function App() {
       navigate("/dashboard")
     } catch (erro) {
       console.error(erro);
-      alert("Erro ao fazer login");
+      alert("Erro ao fazer login: " + erro.response.data.detail);
     }
   }
+
+  useEffect(() => {
+      const token = localStorage.getItem("token");
+
+      if (token) {
+          navigate("/dashboard");
+      }
+  }, [navigate]);
 
   return (
     <div className="container">

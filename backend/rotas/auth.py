@@ -1,21 +1,19 @@
-from fastapi import APIRouter 
+from fastapi import APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Usuario, Perfil
 from schemas import UsuarioCreate, UsuarioLogin
 from passlib.context import CryptContext
-from jose import jwt
-from datetime import datetime, timedelta
-from os import getenv
-from dotenv import load_dotenv
 
-load_dotenv("venv/variaveis.env")
-
-ALGORITHM = "HS256"
-SECRET_KEY = getenv("SECRET_KEY")
+from functions.auxiliares import criar_token
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
+###############################
+#   Rotas de autenticação     #
+###############################
+
 
 @router.post("/cadastro")
 def criar_usuario(usuario: UsuarioCreate):
@@ -25,6 +23,23 @@ def criar_usuario(usuario: UsuarioCreate):
         email=usuario.email,
         senha_hash=pwd_context.hash(usuario.senha)
     )
+
+    #for usuario_existente in db.query(Usuario).all():
+    #    if pwd_context.verify(usuario.senha, usuario_existente.senha_hash):
+    #        raise HTTPException(
+    #            status_code=400,
+    #            detail="Senha já está em uso pelo usuário: {}".format(usuario_existente.email)
+    #        )
+
+    # Verifica se o email já está em uso
+    usuario_existente = db.query(Usuario).filter(Usuario.email == usuario.email).first()
+    if usuario_existente:
+        raise HTTPException(
+            status_code=400,
+            detail="Email já está em uso"
+        )
+    
+
 
     db.add(novo_usuario)
     db.commit()
@@ -62,15 +77,3 @@ def login_usuario(usuario: UsuarioLogin):
         "token_type": "bearer",
         "mensagem": "Login bem-sucedido"
     }
-
-def criar_token(usuario_id: int):
-    payload = {
-        "sub": str(usuario_id),
-        "exp": datetime.now() + timedelta(days=7)
-    }
-
-    return jwt.encode(
-        payload,
-        SECRET_KEY,
-        algorithm=ALGORITHM
-    )
