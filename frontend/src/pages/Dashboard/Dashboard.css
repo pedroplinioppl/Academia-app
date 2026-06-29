@@ -35,7 +35,7 @@ body {
 .sidebar {
     width: 280px;
     background: #fff;
-    padding: 32px 24px;
+    padding: 32px 24px 32px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -113,7 +113,7 @@ body {
 .info p strong {
     font-size: 0.78rem;
     font-weight: 600;
-    color: #888;
+    color: #423434;
     letter-spacing: 0.03em;
     text-transform: uppercase;
 }
@@ -123,7 +123,6 @@ body {
     font-size: 0.95rem;
     color: #222;
 }
-
 /* INPUTS DE EDIÇÃO */
 
 .edit-input,
@@ -159,11 +158,41 @@ button {
     font-family: inherit;
     font-size: 0.9rem;
     font-weight: 500;
-    background: #22c55e;
+    background: #214555;
     color: #fff;
     transition: opacity 0.15s;
 }
 
 button:hover {
     opacity: 0.88;
+}
+
+button.btn-leave {
+    margin-top: 10px;
+}
+
+.bottom-right-buttons {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    gap: 12px;
+    z-index: 1000;
+}
+
+.btn-bottom-right {
+    padding: 10px 16px;
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-bottom-right:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
 }

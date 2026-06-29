@@ -115,3 +115,39 @@
     background: #fafafa;
     border-color: #ddd;
 }
+
+.clicavel {
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.clicavel:hover {
+    transform: scale(1.02);
+    background-color: #f5f5f5;
+}
+
+.bottom-right-buttons {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    display: flex;
+    gap: 12px;
+    z-index: 1000;
+}
+
+.btn-bottom-right {
+    padding: 10px 16px;
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+    white-space: nowrap;
+}
+
+.btn-bottom-right:hover {
+    background-color: #2563eb;
+    transform: translateY(-2px);
+}

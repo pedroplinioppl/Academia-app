@@ -271,7 +271,7 @@
 }
 
 .btn-salvar {
-    background: #22c55e;
+    background: #214555;
     color: #fff;
 }
 
@@ -304,7 +304,7 @@
 }
 
 .botoes button:last-child {
-    background: #22c55e;
+    background: #214555;
     color: #fff;
     font-weight: 500;
 }
@@ -338,4 +338,27 @@ select:focus {
 
 select option[value=""] {
     color: #aaa;
+}
+
+.exercicio-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #000000;
+    font-size: 0.85rem;
+}
+
+.info-valor {
+    color: #000000; /* ou a cor do seu tema */
 }

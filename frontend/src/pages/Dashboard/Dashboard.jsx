@@ -16,6 +16,16 @@ function Dashboard() {
 
             <main className="content">
                 <Treinos />
+
+                <div className="bottom-right-buttons">
+                    <button className="btn-bottom-right">
+                        Visualizar medidas
+                    </button>
+
+                    <button className="btn-bottom-right">
+                        Visualizar evolução
+                    </button>
+                </div>
             </main>
 
         </div>

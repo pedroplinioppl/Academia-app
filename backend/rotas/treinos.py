@@ -128,6 +128,37 @@ def atualizar_treino(
 
     return treino_existente
 
+@router.put("/treinos/{treino_id}/exercicios/{exercicio_id}")
+def atualizar_exercicio(
+    treino_id: int,
+    exercicio: ExercicioCreate,
+    exercicio_id: int
+):
+    db = SessionLocal()
+
+    treino_exercicio = db.query(TreinoExercicio).filter(
+        TreinoExercicio.treino_id == treino_id,
+        TreinoExercicio.exercicio_id == exercicio_id
+    ).first()
+
+    if not treino_exercicio:
+        raise HTTPException(
+            status_code=404,
+            detail="Exercício não encontrado"
+        )
+    
+    treino_exercicio.series = exercicio.series
+    treino_exercicio.repeticoes = exercicio.repeticoes
+    treino_exercicio.exercicio.nome = exercicio.nome
+    treino_exercicio.exercicio.descricao = exercicio.descricao
+    treino_exercicio.exercicio.grupo_muscular = exercicio.grupo_muscular
+
+    db.commit()
+    db.refresh(treino_exercicio)
+    db.refresh(treino_exercicio.exercicio)  
+    
+    return treino_exercicio
+
 @router.post("/treinos/{treino_id}/exercicios")
 def criar_exercicio(
     treino_id: int,

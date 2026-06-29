@@ -231,6 +231,13 @@ function Perfil({
             <button onClick={handleEditar}>
                 {editando ? "Confirmar Edições" : "Editar Perfil"}
             </button>
+
+            <button className="btn btn-leave" onClick={() => {
+                localStorage.removeItem("token");
+                navigate("/");
+            }}>
+                Sair
+            </button>
         </>
     );
 }

@@ -1,6 +1,6 @@
 function TreinoCard({ treino, onClick }) {
     return (
-        <div className="treino-card" onClick={onClick}>
+        <div className="treino-card clicavel" onClick={onClick}>
             <h3>{treino.nome}</h3>
             <p>{treino.descricao}</p>
         </div>
