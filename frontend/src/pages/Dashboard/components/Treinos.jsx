@@ -4,6 +4,18 @@ import "./Treinos.css";
 import TreinoCard from "./TreinoCard";
 import TreinoDetalhe from "./TreinoDetalhe";
 import axios from "axios";
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    verticalListSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable";
 
 function Treinos() {
     const navigate = useNavigate();
@@ -13,6 +25,8 @@ function Treinos() {
     const [treinoSelecionado, setTreinoSelecionado] = useState(null);
     const [nome, setNome] = useState("");
     const [descricao, setDescricao] = useState("");
+
+    const sensors = useSensors(useSensor(PointerSensor));
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -33,8 +47,8 @@ function Treinos() {
     }, [navigate]);
 
     async function criarTreino() {
-        if (!nome.trim() || !descricao.trim()) {
-            alert("Preencha todos os campos.");
+        if (!nome.trim()) {
+            alert("Preencha o nome");
             return;
         }
 
@@ -65,6 +79,33 @@ function Treinos() {
         }
     }
 
+    async function handleDragEnd(event) {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = treinos.findIndex((t) => t.id === active.id);
+        const newIndex = treinos.findIndex((t) => t.id === over.id);
+        const novaOrdem = arrayMove(treinos, oldIndex, newIndex);
+
+        setTreinos(novaOrdem);
+
+        try {
+            const token = localStorage.getItem("token");
+            await axios.patch(
+                "http://localhost:8000/treino/reordenar",
+                novaOrdem.map((t) => t.id),
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+        } catch (err) {
+            console.error(err);
+            alert("Não foi possível salvar a nova ordem.");
+        }
+    }
+
     if (treinoSelecionado) {
         return (
             <TreinoDetalhe
@@ -78,13 +119,24 @@ function Treinos() {
         <>
             <h1>Meus Treinos</h1>
 
-            {treinos.map((treino) => (
-                <TreinoCard
-                    key={treino.id}
-                    treino={treino}
-                    onClick={() => setTreinoSelecionado(treino)}
-                />
-            ))}
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={treinos.map((t) => t.id)}
+                    strategy={verticalListSortingStrategy}
+                >
+                    {treinos.map((treino) => (
+                        <TreinoCard
+                            key={treino.id}
+                            treino={treino}
+                            onClick={() => setTreinoSelecionado(treino)}
+                        />
+                    ))}
+                </SortableContext>
+            </DndContext>
 
             <button onClick={() => setMostrarModal(true)}>
                 Adicionar Treino

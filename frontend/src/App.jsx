@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard/Dashboard";
+import TreinosPublicados from "./pages/TreinoPublicado/TreinosPublicados";
 
 function App() {
 
@@ -19,6 +20,11 @@ function App() {
                 <Route
                     path="/dashboard"
                     element={<Dashboard />}
+                />
+
+                <Route 
+                    path="/treinos-publicados"
+                    element={<TreinosPublicados />}
                 />
 
             </Routes>

@@ -5,6 +5,7 @@ from jose import jwt, JWTError
 import os
 from dotenv import load_dotenv
 from datetime import datetime
+from database import SessionLocal
 
 load_dotenv("venv/variaveis.env")
 
@@ -62,3 +63,10 @@ def criar_token(usuario_id: int):
         SECRET_KEY,
         algorithm=ALGORITHM
     )
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()

@@ -1,6 +1,22 @@
 import { useState, useEffect } from "react";
 import "./TreinoDetalhe.css";
+import ExercicioCard from "./ExercicioCard"
 import axios from "axios";
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    SortableContext,
+    useSortable,
+    verticalListSortingStrategy,
+    arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
 
 function TreinoDetalhe({ treino, voltar }) {
 
@@ -29,6 +45,7 @@ function TreinoDetalhe({ treino, voltar }) {
     const [exercicioDescricao, setExercicioDescricao] = useState("");
     const [exercicioSeries, setExercicioSeries] = useState("");
     const [exercicioRepeticoes, setExercicioRepeticoes] = useState("");
+    const [exercicioPeso, setExercicioPeso] = useState("");
     const [selectedGrupo, setSelectedGrupo] = useState("");
 
     const gruposMusculares = [
@@ -82,6 +99,26 @@ function TreinoDetalhe({ treino, voltar }) {
         setEditando(true);
     }
 
+    const sensors = useSensors(useSensor(PointerSensor));
+
+    async function handleDragEnd(event) {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = exercicios.findIndex(e => e.id === active.id);
+        const newIndex = exercicios.findIndex(e => e.id === over.id);
+        const novaOrdem = arrayMove(exercicios, oldIndex, newIndex);
+
+        setExercicios(novaOrdem); // atualiza visual imediatamente
+
+        const token = localStorage.getItem("token");
+        await axios.patch(
+            "http://localhost:8000/treino/exercicios/reordenar",
+            novaOrdem.map(e => e.id),
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+    }
+
     function toggleDiaDraft(dia) {
         setDiasDraft(prev =>
             prev.includes(dia)
@@ -100,8 +137,9 @@ function TreinoDetalhe({ treino, voltar }) {
                 descricao: exercicioDraft.exercicio.descricao,
                 grupo_muscular: exercicioDraft.exercicio.grupo_muscular,
                 series: exercicioDraft.series,
-                repeticoes: exercicioDraft.repeticoes
-            },
+                repeticoes: exercicioDraft.repeticoes,
+                peso: exercicioDraft.peso
+            }, 
             {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -136,15 +174,12 @@ function TreinoDetalhe({ treino, voltar }) {
                     }
                 }
             );
-
-            // Atualiza os estados com o retorno da API
             setNome(nomeDraft);
             setDescricao(descricaoDraft);
             setDias(diasDraft);
 
             setEditando(false);
 
-            alert("Treino atualizado com sucesso!");
         } catch (err) {
             console.error(err);
             alert("Não foi possível atualizar o treino.");
@@ -166,7 +201,8 @@ function TreinoDetalhe({ treino, voltar }) {
                     descricao: exercicioDescricao,
                     series: exercicioSeries,
                     repeticoes: exercicioRepeticoes,
-                    grupo_muscular: selectedGrupo
+                    grupo_muscular: selectedGrupo,
+                    peso: exercicioPeso
                 },
                 {
                     headers: {
@@ -183,6 +219,7 @@ function TreinoDetalhe({ treino, voltar }) {
             setExercicioDescricao("");
             setSelectedGrupo("");
             setExercicioSeries("");
+            setExercicioPeso("");
             setExercicioRepeticoes("");
 
         } catch (err) {
@@ -245,22 +282,22 @@ function TreinoDetalhe({ treino, voltar }) {
             <div className="divisor" />
 
             <div className="lista-exercicios">
-                {exercicios.map(exercicio => (
-                    <div key={exercicio.id} className="exercicio-card clicavel" onClick={() => {
-                        setExercicioDetalhe(exercicio);
-                        setExercicioDraft(exercicio);
-                        setModalExercicioDetalhe(true);
-                    }}>
-                        <span className="exercicio-nome">
-                            {exercicio.exercicio.nome}
-                        </span>
-
-                        <span className="exercicio-series">
-                            {exercicio.series}×{exercicio.repeticoes}
-                        </span>
-                    </div>
-                ))}
-            </div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                    <SortableContext items={exercicios.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                        {exercicios.map(exercicio => (
+                            <ExercicioCard
+                                key={exercicio.id}
+                                exercicio={exercicio}
+                                editando={editando}
+                                onClick={() => {
+                                    setExercicioDetalhe(exercicio);
+                                    setExercicioDraft(exercicio);
+                                    setModalExercicioDetalhe(true);
+                                }}
+                            />
+                        ))}
+                    </SortableContext>
+                </DndContext> </div>
 
             {modalExercicioDetalhe && (
                 <div className="modal-overlay">
@@ -342,6 +379,18 @@ function TreinoDetalhe({ treino, voltar }) {
                                     }
                                 />
 
+                                <label>Peso</label>
+                                <input
+                                    type="number"
+                                    value={exercicioDraft.peso}
+                                    onChange={(e) =>
+                                        setExercicioDraft({
+                                            ...exercicioDraft,
+                                            peso: Number(e.target.value)
+                                        })
+                                    }
+                                />
+
                                 <div className="modal-botoes">
                                     <button
                                         className="btn-salvar"
@@ -387,6 +436,10 @@ function TreinoDetalhe({ treino, voltar }) {
                                     <div className="info-row">
                                         <span className="info-label">Repetições</span>
                                         <span className="info-valor">{exercicioDetalhe?.repeticoes}</span>
+                                    </div>
+                                    <div className="info-row">
+                                        <span className="info-label">Peso</span>
+                                        <span className="info-valor">{exercicioDetalhe?.peso}</span>
                                     </div>
                                 </div>
 
@@ -468,6 +521,11 @@ function TreinoDetalhe({ treino, voltar }) {
                             onChange={(e) => setExercicioRepeticoes(e.target.value)}
                         />
 
+                        <input
+                            placeholder="Peso (Kg)"
+                            value={exercicioPeso}
+                            onChange={(e) => setExercicioPeso(e.target.value)}
+                        />
 
                         <div className="botoes">
                             <button
@@ -478,6 +536,7 @@ function TreinoDetalhe({ treino, voltar }) {
                                     setSelectedGrupo("");
                                     setExercicioSeries("");
                                     setExercicioRepeticoes("");
+                                    setExercicioPeso("");
                                 }}
                             >
                                 Cancelar

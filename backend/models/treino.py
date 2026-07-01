@@ -46,6 +46,12 @@ class Treino(Base):
         server_default=func.now()
     )
 
+    ordem = Column(
+        Integer, 
+        nullable=False,
+        default=0
+    )
+
     usuario = relationship(
         "Usuario"
     )
@@ -115,7 +121,7 @@ class Exercicio(Base):
     )
 
 class TreinoExercicio(Base):
-
+ 
     __tablename__ = "treino_exercicios"
 
     id = Column(
@@ -139,8 +145,16 @@ class TreinoExercicio(Base):
 
     repeticoes = Column(Integer)
 
+    peso = Column(Float)
+
     observacao = Column(
         String(500)
+    )
+
+    ordem = Column(
+        Integer, 
+        nullable=False,
+        default=0
     )
 
     treino = relationship(
@@ -151,4 +165,28 @@ class TreinoExercicio(Base):
     exercicio = relationship(
         "Exercicio",
         back_populates="treinos"
+    )
+
+class PublicacaoTreino(Base):
+
+    __tablename__ = "publicacao_treinos"
+
+    id = Column(
+        Integer,
+        primary_key=True
+    )
+
+    treino_id = Column(
+        Integer,
+        ForeignKey("treinos.id"),
+        nullable=False
+    )
+
+    data_publicacao = Column(
+        DateTime(timezone=True),
+        server_default=func.now()
+    )
+
+    treino = relationship(
+        "Treino"
     )

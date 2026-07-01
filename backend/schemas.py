@@ -29,3 +29,16 @@ class ExercicioCreate(BaseModel):
     grupo_muscular: str | None = None
     series: int | None = None
     repeticoes: int | None = None
+    peso: float | None = None
+
+class MedidaCreate(BaseModel):
+    peso: float 
+    percentual_gordura: float
+    peito: float
+    cintura: float
+    quadril: float
+    braco: float 
+    antebraco: float 
+    coxa: float
+    panturrilha: float 
+    data_registro: Date

@@ -1,27 +1,30 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 from schemas import TreinoCreate, ExercicioCreate
-from database import SessionLocal
-from models import Treino, Exercicio, TreinoDia, TreinoExercicio
-from functions.auxiliares import get_current_user_id
+from models import Treino, Exercicio, TreinoDia, TreinoExercicio, PublicacaoTreino
+from functions.auxiliares import get_current_user_id, get_db
+
 
 router = APIRouter() 
 
 @router.get("/treinos")
 def get_treinos(
-    usuario_id: int = Depends(get_current_user_id)
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    db = SessionLocal()
 
     treinos = db.query(Treino).filter(
         Treino.usuario_id == usuario_id
-    ).all() # Todos os treinos do usuário
+    ).order_by(Treino.ordem).all()
 
     return treinos
-
+ 
 @router.post("/treinos")
 def criar_treino(
-    treino: TreinoCreate,
-    usuario_id: int = Depends(get_current_user_id)
+    treino: TreinoCreate, 
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
     if not treino.nome:
         raise HTTPException(
@@ -29,12 +32,16 @@ def criar_treino(
             detail="Nome de treino é obrigatório"
         )
 
-    db = SessionLocal()
+
+    max_ordem = db.query(func.max(Treino.ordem)).filter(
+        Treino.usuario_id == usuario_id
+    ).scalar() or 0
 
     novo_treino = Treino(
         usuario_id=usuario_id,
         nome=treino.nome,
-        descricao=treino.descricao
+        descricao=treino.descricao,
+        ordem=max_ordem + 1
     )
 
     db.add(novo_treino)
@@ -43,17 +50,53 @@ def criar_treino(
 
     return novo_treino
 
+@router.get("/treinos/publicados")
+def get_treinos_publicados(
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    publicacoes = db.query(PublicacaoTreino).order_by(
+        PublicacaoTreino.data_publicacao.desc()
+    ).all()
+
+    resultado = []
+    for pub in publicacoes:
+        treino = pub.treino
+        autor_perfil = treino.usuario.perfil
+
+        resultado.append({
+            "publicacao_id": pub.id,
+            "treino_id": treino.id,
+            "nome": treino.nome,
+            "descricao": treino.descricao,
+            "data_publicacao": pub.data_publicacao,
+            "autor": {
+                "id": autor_perfil.id,
+                "nome": autor_perfil.nome,
+                "avatar": autor_perfil.avatar
+            }
+        })
+
+    return resultado
+
 @router.get("/treinos/{treino_id}")
 def get_treino(
     treino_id: int,
-    usuario_id: int = Depends(get_current_user_id)
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    db = SessionLocal()
+
 
     treino = db.query(Treino).filter(
         Treino.id == treino_id,
         Treino.usuario_id == usuario_id
     ).first()
+
+    if not treino:
+        raise HTTPException(
+            status_code=404,
+            detail="Treino não encontrado"
+        )
 
     treinos_dia = db.query(TreinoDia).filter(
         TreinoDia.treino_id == treino_id
@@ -61,13 +104,7 @@ def get_treino(
 
     exercicios = db.query(TreinoExercicio).filter(
         TreinoExercicio.treino_id == treino_id
-    ).all()
-
-    if not treino:
-        raise HTTPException(
-            status_code=404,
-            detail="Treino não encontrado"
-        )
+    ).order_by(TreinoExercicio.ordem).all()
 
     return {
         "id": treino.id,
@@ -77,11 +114,13 @@ def get_treino(
         "exercicios": [
             {
                 "id": te.id,
+                "ordem": te.ordem,
                 "exercicio": {                
                     "nome": te.exercicio.nome,
                     "descricao": te.exercicio.descricao,
                     "grupo_muscular": te.exercicio.grupo_muscular,
                 },
+                "peso": te.peso,
                 "series": te.series,
                 "repeticoes": te.repeticoes,
                 "observacao": te.observacao
@@ -89,13 +128,15 @@ def get_treino(
             for te in exercicios
         ]
     }
+
 @router.put("/treinos/{treino_id}")
 def atualizar_treino(
     treino_id: int,
     treino: TreinoCreate,
-    usuario_id: int = Depends(get_current_user_id)
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    db = SessionLocal()
+
 
     treino_existente = db.query(Treino).filter(
         Treino.id == treino_id,
@@ -128,17 +169,58 @@ def atualizar_treino(
 
     return treino_existente
 
-@router.put("/treinos/{treino_id}/exercicios/{exercicio_id}")
+@router.post("/treinos/{treino_id}/publicar")
+def publicar_treino(
+        treino_id: int,
+        user_id: int = Depends(get_current_user_id),
+        db: Session = Depends(get_db)
+):
+    #Verifica se o treino já foi publicado 
+    publicacao = db.query(PublicacaoTreino).filter(
+        PublicacaoTreino.treino_id == treino_id
+    ).first()
+
+    if publicacao:
+        raise HTTPException(
+            status_code=400,
+            detail="Treino já foi publicado"
+        )
+    else:
+        #Verifica se o treino pertence ao usuário
+        treino = db.query(Treino).filter(
+            Treino.id == treino_id,
+            Treino.usuario_id == user_id
+        ).first()
+
+        if not treino:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Treino não encontrado: {user_id} - {treino_id}"
+            )
+
+        nova_publicacao = PublicacaoTreino(
+            treino_id=treino_id
+        )
+
+        db.add(nova_publicacao)
+        db.commit()
+        db.refresh(nova_publicacao)
+
+        return {"message": "Treino publicado com sucesso"}
+
+@router.put("/treinos/{treino_id}/exercicios/{treino_exercicio_id}")
 def atualizar_exercicio(
     treino_id: int,
     exercicio: ExercicioCreate,
-    exercicio_id: int
+    treino_exercicio_id: int,          # ← renomeia pra ficar claro
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    db = SessionLocal()
-
-    treino_exercicio = db.query(TreinoExercicio).filter(
+    
+    treino_exercicio = db.query(TreinoExercicio).join(Treino).filter(
+        TreinoExercicio.id == treino_exercicio_id,  # ← filtra pelo ID do TreinoExercicio
         TreinoExercicio.treino_id == treino_id,
-        TreinoExercicio.exercicio_id == exercicio_id
+        Treino.usuario_id == usuario_id
     ).first()
 
     if not treino_exercicio:
@@ -149,6 +231,7 @@ def atualizar_exercicio(
     
     treino_exercicio.series = exercicio.series
     treino_exercicio.repeticoes = exercicio.repeticoes
+    treino_exercicio.peso = exercicio.peso
     treino_exercicio.exercicio.nome = exercicio.nome
     treino_exercicio.exercicio.descricao = exercicio.descricao
     treino_exercicio.exercicio.grupo_muscular = exercicio.grupo_muscular
@@ -163,9 +246,9 @@ def atualizar_exercicio(
 def criar_exercicio(
     treino_id: int,
     exercicio: ExercicioCreate,
-    usuario_id: int = Depends(get_current_user_id)
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    db = SessionLocal()
 
     treino = db.query(Treino).filter(
         Treino.id == treino_id,
@@ -188,11 +271,17 @@ def criar_exercicio(
     db.commit()
     db.refresh(novo_exercicio)
 
+    max_ordem = db.query(func.max(TreinoExercicio.ordem)).filter(
+        TreinoExercicio.treino_id == treino_id
+    ).scalar() or 0
+
     treino_exercicio = TreinoExercicio(
         treino_id=treino_id,
         exercicio_id=novo_exercicio.id,
         series=exercicio.series,
-        repeticoes=exercicio.repeticoes
+        repeticoes=exercicio.repeticoes,
+        peso=exercicio.peso,
+        ordem=max_ordem + 1
     )
 
     db.add(treino_exercicio)
@@ -201,6 +290,7 @@ def criar_exercicio(
 
     return {
         "id": treino_exercicio.id,
+        "ordem": treino_exercicio.ordem,
         "exercicio": {
             "nome": novo_exercicio.nome,
             "descricao": novo_exercicio.descricao,
@@ -208,5 +298,44 @@ def criar_exercicio(
         },
         "series": treino_exercicio.series,
         "repeticoes": treino_exercicio.repeticoes,
+        "peso": treino_exercicio.peso,
         "observacao": treino_exercicio.observacao
     }
+
+@router.patch("/treino/exercicios/reordenar")
+def reordenar_exercicios(
+    ordem: list[int],
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    for index, te_id in enumerate(ordem):
+        exercicio = (
+            db.query(TreinoExercicio)
+            .filter(TreinoExercicio.id == te_id)
+            .first()
+        )
+
+        if exercicio and exercicio.treino.usuario_id == usuario_id:
+            exercicio.ordem = index
+
+    db.commit()
+
+@router.patch("/treino/reordenar")
+def reordenar_treinos(
+    ordem: list[int],
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    treinos = (
+        db.query(Treino)
+        .filter(Treino.usuario_id == usuario_id)
+        .all()
+    )
+
+    treinos_por_id = {t.id: t for t in treinos}
+
+    for index, treino_id in enumerate(ordem):
+        if treino_id in treinos_por_id:
+            treinos_por_id[treino_id].ordem = index
+
+    db.commit()

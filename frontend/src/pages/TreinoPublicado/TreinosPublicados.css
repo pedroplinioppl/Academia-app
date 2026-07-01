@@ -1,0 +1,23 @@
+.treinos-publicados {
+    width: 100%;
+}
+
+.treinos-publicados h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111;
+    letter-spacing: -0.3px;
+    margin-bottom: 24px;
+}
+
+.mensagem-vazia {
+    color: #6b6375;
+    font-size: 0.9rem;
+}
+
+.treinos-publicados-content {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+    width: 100%;
+}

@@ -1,11 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import SessionLocal
 from models import Usuario, Perfil
 from schemas import UsuarioCreate, UsuarioLogin
 from passlib.context import CryptContext
 
-from functions.auxiliares import criar_token
+from functions.auxiliares import criar_token, get_db
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -16,8 +15,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 @router.post("/cadastro")
-def criar_usuario(usuario: UsuarioCreate):
-    db: Session = SessionLocal()
+def criar_usuario(
+        usuario: UsuarioCreate,
+        db: Session = Depends(get_db)
+    ):
     
     novo_usuario = Usuario(
         email=usuario.email,
@@ -62,8 +63,10 @@ def criar_usuario(usuario: UsuarioCreate):
     return {"mensagem": "Usuário criado com sucesso", "access_token": token, "token_type": "bearer"}
 
 @router.post("/login")
-def login_usuario(usuario: UsuarioLogin):
-    db: Session = SessionLocal()
+def login_usuario(
+    usuario: UsuarioLogin,
+    db: Session = Depends(get_db)
+):
     
     usuario_db = db.query(Usuario).filter(Usuario.email == usuario.email).first()
     

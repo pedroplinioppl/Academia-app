@@ -1,12 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
-from database import SessionLocal
 from models import Perfil
 from schemas import PerfilUpdate
 import shutil
 import os
-from database import SessionLocal
-from functions.auxiliares import get_current_user_id
+from functions.auxiliares import get_current_user_id, get_db
 
 router = APIRouter()
 
@@ -14,9 +12,8 @@ router = APIRouter()
 async def upload_avatar(
     file: UploadFile = File(...),
     usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    
-    db = SessionLocal()
 
     perfil = db.query(Perfil).filter(
         Perfil.usuario_id == usuario_id
@@ -60,10 +57,9 @@ async def upload_avatar(
 
 @router.get("/perfil")
 def buscar_perfil(
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-
-    db: Session = SessionLocal()
 
     perfil = db.query(
         Perfil
@@ -76,9 +72,9 @@ def buscar_perfil(
 @router.put("/perfil")
 def atualizar_perfil( 
     dados: PerfilUpdate,
-    user_id: int = Depends(get_current_user_id)
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
 ):
-    db: Session = SessionLocal()
 
     perfil = (
         db.query(Perfil)

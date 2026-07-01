@@ -148,7 +148,7 @@ function Perfil({
             <div className="info">
 
                 <p>
-                    <strong>📏 Altura:</strong>
+                    <strong>Altura</strong>
 
                     {editando ? (
                         <input
@@ -168,7 +168,7 @@ function Perfil({
                 </p>
 
                 <p>
-                    <strong>🎯 Objetivo:</strong>
+                    <strong>Objetivo</strong>
 
                     {editando ? (
                         <input
@@ -188,7 +188,7 @@ function Perfil({
                 </p>
 
                 <p>
-                    <strong>⚧ Sexo:</strong>
+                    <strong>Sexo</strong>
 
                     {editando ? (
                         <input
@@ -208,7 +208,7 @@ function Perfil({
                 </p>
 
                 <p>
-                    <strong>🎂 Nascimento:</strong>
+                    <strong>Nascimento</strong>
 
                     {editando ? (
                         <input

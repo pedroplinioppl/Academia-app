@@ -4,6 +4,7 @@ from database import engine, Base
 from rotas.auth import router as auth_router
 from rotas.perfil import router as perfil_router
 from rotas.treinos import router as treinos_router
+from rotas.medidas import router as medidas_router
 from fastapi.staticfiles import StaticFiles
 
 Base.metadata.create_all(bind=engine)
@@ -27,6 +28,7 @@ app.mount(
 app.include_router(auth_router)
 app.include_router(perfil_router)
 app.include_router(treinos_router)
+app.include_router(medidas_router)
 
 @app.get("/")
 def home():
