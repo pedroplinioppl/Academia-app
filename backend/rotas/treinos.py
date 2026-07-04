@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from schemas import TreinoCreate, ExercicioCreate
 from models import Treino, Exercicio, TreinoDia, TreinoExercicio, PublicacaoTreino
@@ -87,10 +87,19 @@ def get_treino(
 ):
 
 
-    treino = db.query(Treino).filter(
-        Treino.id == treino_id,
-        Treino.usuario_id == usuario_id
-    ).first()
+    treino = (
+        db.query(Treino)
+        .filter(
+            Treino.id == treino_id,
+            or_(
+                Treino.usuario_id == usuario_id,
+                Treino.id.in_(
+                    db.query(PublicacaoTreino.treino_id)
+                )
+            )
+        )
+        .first()
+    )
 
     if not treino:
         raise HTTPException(
@@ -169,6 +178,34 @@ def atualizar_treino(
 
     return treino_existente
 
+@router.delete("/treinos/{treino_id}")
+def deletar_treino(
+    treino_id: int,
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    
+    # Apaga todas as publicações relacionadas a esse treino
+    db.query(PublicacaoTreino).filter(
+        PublicacaoTreino.treino_id == treino_id
+    ).delete()
+
+    treino = db.query(Treino).filter(
+        Treino.id == treino_id,
+        Treino.usuario_id == usuario_id
+    ).first()
+
+    if not treino:
+        raise HTTPException(
+            status_code=404,
+            detail="Treino não encontrado"
+        )
+
+    db.delete(treino)
+    db.commit()
+
+    return {"message": "Treino deletado com sucesso"}
+
 @router.post("/treinos/{treino_id}/publicar")
 def publicar_treino(
         treino_id: int,
@@ -207,6 +244,51 @@ def publicar_treino(
         db.refresh(nova_publicacao)
 
         return {"message": "Treino publicado com sucesso"}
+
+@router.delete("/treinos/{treino_id}/publicar")
+def despublicar_treino(
+        treino_id: int,
+        user_id: int = Depends(get_current_user_id),
+        db: Session = Depends(get_db)
+):
+    publicacao = db.query(PublicacaoTreino).filter(
+        PublicacaoTreino.treino_id == treino_id
+    ).first()
+
+    if not publicacao:
+        raise HTTPException(
+            status_code=400,
+            detail="Treino não está publicado"
+        )
+    else:
+        #Verifica se o treino pertence ao usuário
+        treino = db.query(Treino).filter(
+            Treino.id == treino_id,
+            Treino.usuario_id == user_id
+        ).first()
+
+        if not treino:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Treino não encontrado: {user_id} - {treino_id}"
+            )
+
+        db.delete(publicacao)
+        db.commit()
+
+        return {"message": "Treino despublicado com sucesso"}
+
+@router.get("/treinos/publicados")
+def meus_treinos_publicados(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id)
+):
+    treinos = db.query(Treino).join(PublicacaoTreino).filter(
+        PublicacaoTreino.treino_id == Treino.id,
+        Treino.usuario_id == user_id
+    ).all()
+
+    return treinos
 
 @router.put("/treinos/{treino_id}/exercicios/{treino_exercicio_id}")
 def atualizar_exercicio(
@@ -301,6 +383,30 @@ def criar_exercicio(
         "peso": treino_exercicio.peso,
         "observacao": treino_exercicio.observacao
     }
+
+@router.delete("/treinos/{treino_id}/exercicios/{exercicio_id}")
+def apagar_exercicio(
+    treino_id: int,
+    exercicio_id: int,
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    treino_exercicio = db.query(TreinoExercicio).join(Treino).filter(
+        TreinoExercicio.treino_id == treino_id,
+        TreinoExercicio.exercicio_id == exercicio_id,
+        Treino.usuario_id == usuario_id
+    ).first()
+
+    if not treino_exercicio:
+        raise HTTPException(
+            status_code=404,
+            detail="Exercício não encontrado"
+        )
+
+    db.delete(treino_exercicio)
+    db.commit()
+
+    return {"message": "Exercício apagado com sucesso"}
 
 @router.patch("/treino/exercicios/reordenar")
 def reordenar_exercicios(

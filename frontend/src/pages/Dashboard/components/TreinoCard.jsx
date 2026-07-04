@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import botaoPublicar from "../../../assets/botao publicar.png";
@@ -10,12 +10,40 @@ function TreinoCard({ treino, onClick }) {
         useSortable({ id: treino.id });
 
     const [mConfirmacao, setModalConfirmacao] = useState(false);
+    const [treinoPublicado, setTreinoPublicado] = useState(false);
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         opacity: isDragging ? 0.5 : 1,
     };
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        const verificarTreinoPublicado = async () => {
+            try {
+                const res = await axios.get(
+                    "http://localhost:8000/treinos/publicados",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (res.data.some((t) => t.treino_id === treino.id)) {
+                    setTreinoPublicado(true);
+                } else {
+                    setTreinoPublicado(false);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        verificarTreinoPublicado();
+    }, [treino.id]);
 
     async function publicarTreino() {
         try {
@@ -55,26 +83,28 @@ function TreinoCard({ treino, onClick }) {
                     <p>{treino.descricao}</p>
                 </div>
 
-                <button
-                    style={{
-                        marginLeft: "auto",
-                        width: "auto",
-                        background: "transparent"
-                    }}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setModalConfirmacao(true);
-                    }}
-                >
-                    <img
-                        src={botaoPublicar}
-                        alt="Publicar"
+                {!treinoPublicado && (
+                    <button
                         style={{
-                            width: "80px",
-                            height: "40px",
+                            marginLeft: "auto",
+                            width: "auto",
+                            background: "transparent",
                         }}
-                    />
-                </button>
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setModalConfirmacao(true);
+                        }}
+                    >
+                        <img
+                            src={botaoPublicar}
+                            alt="Publicar"
+                            style={{
+                                width: "80px",
+                                height: "40px",
+                            }}
+                        />
+                    </button>
+                )}
             </div>
 
             {mConfirmacao && (

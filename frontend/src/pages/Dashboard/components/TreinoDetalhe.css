@@ -80,6 +80,14 @@
     border-color: #3b82f6;
 }
 
+.volume-total {
+    font-size: 0.9rem;
+    color: #555;
+    margin-top: 8px;
+    text-align: right;
+    font-family: inherit;
+}
+
 /* DIAS */
 
 .dias-container {
@@ -212,19 +220,6 @@
 
 /* AÇÕES */
 
-.acoes {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    margin-top: 8px;
-}
-
-.acoes-direita {
-    display: flex;
-    gap: 8px;
-}
-
 .acoes button,
 .botoes button {
     border: none;
@@ -245,9 +240,6 @@
     color: #b91c1c;
 }
 
-.btn-apagar:hover {
-    background: #fecaca;
-}
 
 .btn-voltar,
 .btn-cancelar {
@@ -361,4 +353,110 @@ select option[value=""] {
 
 .info-valor {
     color: #000000; /* ou a cor do seu tema */
+}
+
+.modal-confirmacao {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+
+    background: rgba(0, 0, 0, 0.5);
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    z-index: 1000;
+}
+
+.modal-conteudo {
+    background: white;
+    padding: 24px;
+    border-radius: 12px;
+    min-width: 320px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-botoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+.btn-confirmar {
+    background: #214555;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* ===== ÁREA DE AÇÕES (duas linhas independentes) ===== */
+
+/* linha 1: apagar (esquerda) x voltar/editar ou cancelar/salvar (direita) */
+.acoes-linha-principal {
+    display: flex;
+    justify-content: space-between;
+    align-items: left;
+    gap: 12px;
+}
+
+.acoes-principais {
+    display: flex;
+    gap: 8px;
+}
+
+/* linha 2: toggle público/privado, independente do modo de edição */
+.acoes-publicacao {
+    display: flex;
+    width: fit-content;
+    padding: 3px;
+    gap: 2px;
+    background: #f0f0f0;
+    border-radius: 10px;
+    margin-top: 8px;
+
+    margin-right: auto;
+}
+
+.btn-publico,
+.btn-privado {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+    background: transparent;
+    color: #888;
+    font-size: .85rem;
+    font-weight: 500;
+}
+
+.btn-publico:hover:not(.ativado),
+.btn-privado:hover:not(.ativado) {
+    color: #555;
+}
+
+.btn-publico:disabled,
+.btn-privado:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+/* estados */
+.btn-publico.ativado {
+    background: #22c55e;
+    color: #fff;
+}
+
+.btn-privado.ativado {
+    background: #64748b;
+    color: #fff;
 }

@@ -4,11 +4,13 @@ import axios from "axios";
 import "./TreinosPublicados.css";
 import TreinoPublicadoCard from "./TreinoPublicadoCard";
 import Perfil from "../Dashboard/components/Perfil";
+import ModalTreinoPublicado from "./modalTreinoPublicado";
 
 function TreinosPublicados() {
     const navigate = useNavigate();
     const [treinos, setTreinos] = useState([]);
     const [carregando, setCarregando] = useState(true);
+    const [treinoSelecionado, setTreinoSelecionado] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -48,15 +50,23 @@ function TreinosPublicados() {
                         </p>
                     )}
 
-                    {treinos.map((treino) => (
+                    {treinos.map((treino) => ( 
                         <TreinoPublicadoCard
                             key={treino.publicacao_id}
                             treino={treino}
                             onClick={() => {
-                                // futuro: navigate(`/treinos-publicados/${treino.treino_id}`)
+                                setTreinoSelecionado(treino);
                             }}
                         />
                     ))}
+
+                    {treinoSelecionado && (
+                        <ModalTreinoPublicado
+                            isOpen={!!treinoSelecionado}
+                            treinoPublicado={treinoSelecionado}
+                            voltar={() => setTreinoSelecionado(null)}
+                        />
+                    )}
 
                     <div className="bottom-right-buttons">
                         <button

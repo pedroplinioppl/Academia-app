@@ -110,7 +110,16 @@ function Treinos() {
         return (
             <TreinoDetalhe
                 treino={treinoSelecionado}
-                voltar={() => setTreinoSelecionado(null)}
+                voltar={(apagou) => 
+                {
+                    if (apagou) {
+                        setTreinos((prev) =>
+                            prev.filter((t) => t.id !== treinoSelecionado.id)
+                        );
+                    }
+                    setTreinoSelecionado(null)
+                }
+                }
             />
         );
     }

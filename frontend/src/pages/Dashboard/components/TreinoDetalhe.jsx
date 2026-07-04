@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./TreinoDetalhe.css";
 import ExercicioCard from "./ExercicioCard"
 import axios from "axios";
@@ -20,7 +21,13 @@ import { CSS } from "@dnd-kit/utilities";
 
 function TreinoDetalhe({ treino, voltar }) {
 
+    const navigate = useNavigate();
+
     const [editando, setEditando] = useState(false);
+    const [mConfirmacao, setModalConfirmacao] = useState(false);
+    const [isApagarExercicio, setIsApagarExercicio] = useState(false);
+    const [treinoPublicado, setTreinoPublicado] = useState(false);
+    const [salvandoPublicacao, setSalvandoPublicacao] = useState(false);
 
     const [nome, setNome] = useState(treino.nome);
     const [nomeDraft, setNomeDraft] = useState(treino.nome);
@@ -92,6 +99,33 @@ function TreinoDetalhe({ treino, voltar }) {
 
 
     }, [treino.id]);
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+
+        const verificarTreinoPublicado = async () => {
+            try {
+                const res = await axios.get(
+                    "http://localhost:8000/treinos/publicados",
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+
+                if (res.data.some((t) => t.treino_id === treino.id)) {
+                    setTreinoPublicado(true);
+                } else {
+                    setTreinoPublicado(false);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        verificarTreinoPublicado();
+    }, [treino.id]);
+
     function entrarEdicao() {
         setNomeDraft(nome);
         setDescricaoDraft(descricao);
@@ -139,7 +173,7 @@ function TreinoDetalhe({ treino, voltar }) {
                 series: exercicioDraft.series,
                 repeticoes: exercicioDraft.repeticoes,
                 peso: exercicioDraft.peso
-            }, 
+            },
             {
                 headers: {
                     Authorization: `Bearer ${token}`
@@ -228,6 +262,99 @@ function TreinoDetalhe({ treino, voltar }) {
         }
     }
 
+    async function tornarPublico() {
+        if (treinoPublicado || salvandoPublicacao) {
+            return;
+        }
+
+        const token = localStorage.getItem("token");
+        setSalvandoPublicacao(true);
+        setTreinoPublicado(true); // atualização otimista, reflete na hora
+
+        try {
+            await axios.post(
+                `http://localhost:8000/treinos/${treino.id}/publicar`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+        } catch (err) {
+            console.error(err);
+            setTreinoPublicado(false); // desfaz se der erro
+            alert("Erro ao tornar treino público.");
+        } finally {
+            setSalvandoPublicacao(false);
+        }
+    }
+
+    async function tornarPrivado() {
+        if (!treinoPublicado || salvandoPublicacao) {
+            return;
+        }
+
+        const token = localStorage.getItem("token");
+        setSalvandoPublicacao(true);
+        setTreinoPublicado(false); // atualização otimista, reflete na hora
+
+        try {
+            await axios.delete(
+                `http://localhost:8000/treinos/${treino.id}/publicar`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+        } catch (err) {
+            console.error(err);
+            setTreinoPublicado(true); // desfaz se der erro
+            alert("Erro ao tornar treino privado.");
+        } finally {
+            setSalvandoPublicacao(false);
+        }
+    }
+    async function apagarTreino() {
+        const token = localStorage.getItem("token");
+
+        try {
+            await axios.delete(
+                `http://localhost:8000/treinos/${treino.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            )
+            voltar(true); // indica que o treino foi apagado
+        } catch (err) {
+            console.error(err);
+            alert("Não foi possível apagar o treino.");
+        }
+    }
+
+    async function apagarExercicio(exercicioId) {
+        const token = localStorage.getItem("token");
+
+        try {
+            await axios.delete(
+                `http://localhost:8000/treinos/${treino.id}/exercicios/${exercicioId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            )
+            setIsApagarExercicio(false);
+            setExercicios(prev => prev.filter(ex => ex.id !== exercicioId));
+        } catch (err) {
+            console.error(err);
+            alert("Não foi possível apagar o exercício.");
+        }
+    }
+
     return (
         <div className="treino-detalhe">
 
@@ -254,6 +381,7 @@ function TreinoDetalhe({ treino, voltar }) {
                         <p className="descricao-view">
                             {descricao || <span className="descricao-vazia">Sem descrição</span>}
                         </p>
+                        
                     )}
                 </div>
 
@@ -280,25 +408,29 @@ function TreinoDetalhe({ treino, voltar }) {
             </div>
 
             <div className="divisor" />
-
-            <div className="lista-exercicios">
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                    <SortableContext items={exercicios.map(e => e.id)} strategy={verticalListSortingStrategy}>
-                        {exercicios.map(exercicio => (
-                            <ExercicioCard
-                                key={exercicio.id}
-                                exercicio={exercicio}
-                                editando={editando}
-                                onClick={() => {
-                                    setExercicioDetalhe(exercicio);
-                                    setExercicioDraft(exercicio);
-                                    setModalExercicioDetalhe(true);
-                                }}
-                            />
-                        ))}
-                    </SortableContext>
-                </DndContext> </div>
-
+                    
+            <div className="exercicios-header">
+                <div className="lista-exercicios">
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                        <SortableContext items={exercicios.map(e => e.id)} strategy={verticalListSortingStrategy}>
+                            {exercicios.map(exercicio => (
+                                <ExercicioCard
+                                    key={exercicio.id}
+                                    exercicio={exercicio}
+                                    editando={editando}
+                                    onClick={() => {
+                                        setExercicioDetalhe(exercicio);
+                                        setExercicioDraft(exercicio);
+                                        setModalExercicioDetalhe(true);
+                                    }}
+                                />
+                            ))}
+                        </SortableContext>
+                    </DndContext> </div>
+                <p className="volume-total"> 
+                    VOLUME TOTAL: {exercicios.reduce((acc, ex) => acc + ex.peso, 0)} KG</p>
+            </div>
+                
             {modalExercicioDetalhe && (
                 <div className="modal-overlay">
                     <div className="modal">
@@ -451,6 +583,16 @@ function TreinoDetalhe({ treino, voltar }) {
                                 </button>
 
                                 <button
+                                    className="btn-apagar"
+                                    onClick={() => {
+                                        setIsApagarExercicio(true);
+                                        setModalConfirmacao(true);
+                                    }}
+                                >
+                                    Apagar
+                                </button>
+
+                                <button
                                     className="btn-fechar"
                                     onClick={() => {
                                         setModalExercicioDetalhe(false);
@@ -550,24 +692,97 @@ function TreinoDetalhe({ treino, voltar }) {
                 </div>
             )}
 
-            <div className="acoes">
-                <button className="btn-apagar">Apagar</button>
-                <div className="acoes-direita">
-                    {editando ? (
-                        <>
-                            <button className="btn-cancelar" onClick={cancelar}>Cancelar</button>
-                            <button className="btn-salvar" onClick={salvar}>Salvar</button>
-                        </>
-                    ) : (
-                        <>
-                            <button className="btn-voltar" onClick={voltar}>Voltar</button>
-                            <button className="btn-editar" onClick={entrarEdicao}>Editar</button>
-                        </>
-                    )}
+            {mConfirmacao && (
+                <div
+                    className="modal-confirmacao"
+                    onClick={() => setModalConfirmacao(false)}
+                >
+                    <div
+                        className="modal-conteudo"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <p>Deseja mesmo apagar este {isApagarExercicio ? "exercício" : "treino"}?</p>
+
+                        <div className="modal-botoes">
+                            <button
+                                className="btn-cancelar"
+                                onClick={() => {
+                                    setIsApagarExercicio(false);
+                                    setModalConfirmacao(false);
+                                }}
+                            >
+                                Cancelar
+                            </button>
+
+                            <button
+                                className="btn-confirmar"
+                                onClick={() => {
+                                    if (isApagarExercicio) {
+                                        apagarExercicio(exercicioDetalhe.id);
+                                        setModalExercicioDetalhe(false);
+                                    } else {
+                                        apagarTreino();
+                                    }
+                                    setModalConfirmacao(false);
+                                }}
+                            >
+                                Sim, apagar
+                            </button>
+                        </div>
+                    </div>
                 </div>
+            )}
+
+            <div className="acoes-linha-principal">
+                <button
+                    className="btn-apagar"
+                    onClick={() => setModalConfirmacao(true)}
+                >
+                    Apagar
+                </button>
+
+                {editando ? (
+                    <div className="acoes-principais">
+                        <button className="btn-cancelar" onClick={cancelar}>
+                            Cancelar
+                        </button>
+
+                        <button className="btn-salvar" onClick={salvar}>
+                            Salvar
+                        </button>
+                    </div>
+                ) : (
+                    <div className="acoes-principais">
+                        <button className="btn-voltar" onClick={() => voltar(false)}>
+                            Voltar
+                        </button>
+
+                        <button className="btn-editar" onClick={entrarEdicao}>
+                            Editar
+                        </button>
+                    </div>
+                )}
             </div>
 
+            <div className="acoes-publicacao">
+                <button
+                    className={`btn-publico ${treinoPublicado ? "ativado" : ""}`}
+                    onClick={tornarPublico}
+                    disabled={salvandoPublicacao}
+                >
+                    Público
+                </button>
+
+                <button
+                    className={`btn-privado ${!treinoPublicado ? "ativado" : ""}`}
+                    onClick={tornarPrivado}
+                    disabled={salvandoPublicacao}
+                >
+                    Privado
+                </button>
+            </div>
         </div>
+
     );
 }
 

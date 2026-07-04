@@ -1,0 +1,515 @@
+.treino-detalhe {
+    background: #f5f5f3;
+    padding: 28px;
+    border-radius: 16px;
+    min-height: 80vh;
+    font-family: inherit;
+}
+
+/* CABEÇALHO */
+
+.cabecalho {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.dados {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.nome-view,
+.nome-input {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #111;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+}
+
+.nome-view {
+    margin: 0;
+}
+
+.nome-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0;
+}
+
+.nome-input.editando {
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 2px;
+}
+
+.descricao-view {
+    margin: 0;
+    font-size: .95rem;
+    color: #666;
+    line-height: 1.6;
+}
+
+.descricao-vazia {
+    color: #aaa;
+    font-style: italic;
+}
+
+.descricao-input {
+    width: 100%;
+    height: 60px;
+    resize: none;
+    padding: 10px 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: .95rem;
+    color: #111;
+    outline: none;
+    transition: border-color .15s;
+}
+
+.descricao-input:focus {
+    border-color: #3b82f6;
+}
+
+/* DIAS */
+
+.dias-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.dias-label {
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: #999;
+}
+
+.dias {
+    display: flex;
+    gap: 5px;
+}
+
+.dia {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    background: #fff;
+    color: #888;
+    font-size: .68rem;
+    font-weight: 500;
+    transition: .15s;
+}
+
+.dia.ativo {
+    background: #22c55e;
+    border-color: #22c55e;
+    color: #fff;
+}
+
+.dia.clicavel {
+    cursor: pointer;
+}
+
+.dia.clicavel:hover:not(.ativo) {
+    background: #f0f0f0;
+    border-color: #bbb;
+}
+
+/* DIVISOR */
+
+.divisor {
+    height: 1px;
+    margin-bottom: 20px;
+    background: #e5e5e5;
+}
+
+/* EXERCÍCIOS */
+
+.lista-exercicios {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.exercicio-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 12px;
+}
+
+.exercicio-nome {
+    font-size: 1rem;
+    color: #222;
+}
+
+.exercicio-series {
+    font-size: 1rem;
+    color: #888;
+    font-variant-numeric: tabular-nums;
+}
+
+/* CARD DE TREINO */
+
+.treino-card {
+    margin-bottom: 8px;
+    padding: 16px 18px;
+    background: #fff;
+    border: 1px solid #ebebeb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+
+.treino-card:hover {
+    background: #fafafa;
+    border-color: #ddd;
+}
+
+/* BOTÃO ADICIONAR */
+
+.btn-adicionar {
+    width: 100%;
+    margin-bottom: 20px;
+    padding: 13px;
+    border: 1.5px dashed #ccc;
+    border-radius: 12px;
+    background: transparent;
+    color: #999;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: .15s;
+}
+
+.btn-adicionar:hover {
+    background: #f0f0f0;
+    border-color: #bbb;
+    color: #666;
+}
+
+/* AÇÕES */
+
+.acoes {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.acoes-direita {
+    display: flex;
+    gap: 8px;
+}
+
+.acoes button,
+.botoes button {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: .15s;
+}
+
+/* Botões da tela */
+
+.acoes button {
+    padding: 10px 20px;
+    font-size: .9rem;
+}
+
+.btn-apagar {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.btn-apagar:hover {
+    background: #fecaca;
+}
+
+.btn-voltar,
+.btn-cancelar {
+    background: #ebebeb;
+    color: #555;
+}
+
+.btn-voltar:hover,
+.btn-cancelar:hover {
+    background: #e0e0e0;
+}
+
+.btn-editar {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe !important;
+}
+
+.btn-editar:hover {
+    background: #dbeafe;
+}
+
+.btn-salvar {
+    background: #214555;
+    color: #fff;
+}
+
+.btn-salvar:hover,
+.botoes button:last-child:hover {
+    opacity: .88;
+}
+
+/* BOTÕES DO MODAL */
+
+.botoes {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.botoes button {
+    flex: 1;
+    padding: 10px;
+    font-size: .9rem;
+}
+
+.botoes button:first-child {
+    background: #ebebeb;
+    color: #555;
+}
+
+.botoes button:first-child:hover {
+    background: #e0e0e0;
+}
+
+.botoes button:last-child {
+    background: #214555;
+    color: #fff;
+    font-weight: 500;
+}
+
+/* SELECT */
+
+select {
+    width: 100%;
+    padding: 10px 36px 10px 12px;
+    background: #f5f5f3;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: .95rem;
+    color: #111;
+    outline: none;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+
+    appearance: none;
+    -webkit-appearance: none;
+
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+}
+
+select:focus {
+    background: #fff;
+    border-color: #3b82f6;
+}
+
+select option[value=""] {
+    color: #aaa;
+}
+
+.exercicio-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #000000;
+    font-size: 0.85rem;
+}
+
+.info-valor {
+    color: #000000; /* ou a cor do seu tema */
+}
+
+/* MODAL (overlay + caixa) — definido aqui pra não depender de CSS
+   carregado em outra rota/página */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, .55);
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    width: min(480px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .25);
+}
+
+.modal h2 {
+    margin: 0 0 4px;
+    font-size: 1.15rem;
+    color: #111;
+}
+
+.modal input,
+.modal textarea {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 6px 0 14px;
+    background: #f5f5f3;
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: .9rem;
+    color: #111;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.modal textarea {
+    resize: none;
+    height: 70px;
+}
+
+.modal label {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #666;
+}
+
+.btn-fechar {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #ebebeb;
+    color: #555;
+    font-size: .9rem;
+    cursor: pointer;
+    transition: .15s;
+}
+
+.btn-fechar:hover {
+    background: #e0e0e0;
+}
+
+/* TREINO PUBLICADO — AUTOR */
+
+.modal-treino-publicado {
+    width: min(640px, 92vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 0;
+    background: transparent;
+}
+
+.modal-treino-publicado .treino-detalhe {
+    min-height: 0;
+}
+
+.autor-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.autor-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #ebebeb;
+}
+
+.autor-avatar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #214555;
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.05rem;
+}
+
+.autor-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.autor-nome {
+    font-size: .95rem;
+    font-weight: 600;
+    color: #222;
+}
+
+.autor-label {
+    font-size: .78rem;
+    color: #999;
+}
+
+/* BOTÃO COPIAR TREINO */
+
+.btn-copiar {
+    background: #22c55e;
+    color: #fff;
+    padding: 10px 20px;
+    font-size: .9rem;
+    font-weight: 500;
+}
+
+.btn-copiar:hover {
+    background: #1ea34f;
+}
+
+.btn-copiar:disabled {
+    background: #a7e3bd;
+    cursor: not-allowed;
+}
