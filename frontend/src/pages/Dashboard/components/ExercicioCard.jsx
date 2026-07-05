@@ -30,10 +30,24 @@ function ExercicioCard({ exercicio, editando, onClick }) {
             className="exercicio-card clicavel"
             onClick={onClick}
         >
-            {editando && (
-                <span className="drag-handle" {...attributes} {...listeners}>⠿</span>
-            )}
-            <span className="exercicio-nome">{exercicio.exercicio.nome}</span>
+            <div className="exercicio-esquerda">
+                {editando && (
+                    <span className="drag-handle" {...attributes} {...listeners}>⠿</span>
+                )}
+
+                {exercicio.avatar ? (
+                    <img
+                        src={`http://localhost:8000/uploads/${exercicio.avatar}`}
+                        alt={exercicio.exercicio.nome}
+                        className="exercicio-imagem"
+                    />
+                ) : (
+                    <div className="exercicio-imagem-placeholder">🏋️</div>
+                )}
+
+                <span className="exercicio-nome">{exercicio.exercicio.nome}</span>
+            </div>
+
             <span className="exercicio-series">
                 {exercicio.series}×{exercicio.repeticoes} • {exercicio.peso} kg
             </span>

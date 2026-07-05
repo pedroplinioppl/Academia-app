@@ -46,6 +46,7 @@ function TreinoDetalhe({ treino, voltar }) {
     const [modalExercicioDetalhe, setModalExercicioDetalhe] = useState(false);
     const [exercicioDraft, setExercicioDraft] = useState(null);
     const [editandoExercicio, setEditandoExercicio] = useState(false);
+
     // exercício
 
     const [nomeExercicio, setNomeExercicio] = useState("");
@@ -54,6 +55,12 @@ function TreinoDetalhe({ treino, voltar }) {
     const [exercicioRepeticoes, setExercicioRepeticoes] = useState("");
     const [exercicioPeso, setExercicioPeso] = useState("");
     const [selectedGrupo, setSelectedGrupo] = useState("");
+    const [avatar, setAvatar] = useState(null);
+    const [preview, setPreview] = useState(null);
+
+    // imagem no modo de edição de um exercício já existente
+    const [avatarEditar, setAvatarEditar] = useState(null);
+    const [previewEditar, setPreviewEditar] = useState(null);
 
     const gruposMusculares = [
         "Peito",
@@ -161,34 +168,62 @@ function TreinoDetalhe({ treino, voltar }) {
         );
     }
 
-    function salvarExercicio() {
+    async function salvarExercicio() {
         const token = localStorage.getItem("token");
 
-        axios.put(
-            `http://localhost:8000/treinos/${treino.id}/exercicios/${exercicioDraft.id}`,
-            {
-                nome: exercicioDraft.exercicio.nome,
-                descricao: exercicioDraft.exercicio.descricao,
-                grupo_muscular: exercicioDraft.exercicio.grupo_muscular,
-                series: exercicioDraft.series,
-                repeticoes: exercicioDraft.repeticoes,
-                peso: exercicioDraft.peso
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`
+        try {
+            const res = await axios.put(
+                `http://localhost:8000/treinos/${treino.id}/exercicios/${exercicioDraft.id}`,
+                {
+                    nome: exercicioDraft.exercicio.nome,
+                    descricao: exercicioDraft.exercicio.descricao,
+                    grupo_muscular: exercicioDraft.exercicio.grupo_muscular,
+                    series: exercicioDraft.series,
+                    repeticoes: exercicioDraft.repeticoes,
+                    peso: exercicioDraft.peso
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
                 }
+            );
+
+            let exercicioAtualizado = res.data;
+
+            // se uma nova imagem foi escolhida, envia depois de salvar os outros dados
+            // o endpoint de /avatar retorna só { id, avatar }, então mescla no objeto
+            // já atualizado em vez de substituí-lo (senão perde nome, séries etc.)
+            if (avatarEditar) {
+                const dados = new FormData();
+                dados.append("file", avatarEditar);
+
+                const resAvatar = await axios.post(
+                    `http://localhost:8000/treinos/${treino.id}/exercicios/${exercicioDraft.id}/avatar`,
+                    dados,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "multipart/form-data"
+                        }
+                    }
+                );
+                exercicioAtualizado = {
+                    ...exercicioAtualizado,
+                    avatar: resAvatar.data.avatar
+                };
             }
-        )
-            .then(res => {
-                setExercicios(prev => prev.map(ex => ex.id === res.data.id ? res.data : ex));
-                setEditandoExercicio(false);
-                setModalExercicioDetalhe(false);
-            })
-            .catch(err => {
-                console.error(err);
-                alert("Não foi possível atualizar o exercício.");
-            });
+
+            setExercicios(prev => prev.map(ex => ex.id === exercicioAtualizado.id ? exercicioAtualizado : ex));
+            setExercicioDetalhe(exercicioAtualizado);
+            setAvatarEditar(null);
+            setPreviewEditar(null);
+            setEditandoExercicio(false);
+            setModalExercicioDetalhe(false);
+        } catch (err) {
+            console.error(err);
+            alert("Não foi possível atualizar o exercício.");
+        }
     }
 
     async function salvar() {
@@ -236,7 +271,8 @@ function TreinoDetalhe({ treino, voltar }) {
                     series: exercicioSeries,
                     repeticoes: exercicioRepeticoes,
                     grupo_muscular: selectedGrupo,
-                    peso: exercicioPeso
+                    peso: exercicioPeso,
+                    avatar: avatar ? avatar.name : null  
                 },
                 {
                     headers: {
@@ -245,8 +281,27 @@ function TreinoDetalhe({ treino, voltar }) {
                 }
             );
 
-            // adiciona o novo exercício à lista de exercícios
-            setExercicios(prev => [...prev, res.data]);
+            let novoExercicio = res.data;
+
+            if(avatar) {
+                const dados = new FormData();
+                dados.append("file", avatar);
+
+                const resAvatar = await axios.post(
+                    `http://localhost:8000/treinos/${treino.id}/exercicios/${res.data.id}/avatar`,
+                    dados,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                            "Content-Type": "multipart/form-data"
+                        }
+                    }
+                );
+                novoExercicio = { ...novoExercicio, avatar: resAvatar.data.avatar };
+            }
+
+            // adiciona o novo exercício à lista de exercícios (já com o avatar, se houver)
+            setExercicios(prev => [...prev, novoExercicio]);
 
             setModalNovoExercicio(false);
             setNomeExercicio("");
@@ -381,7 +436,7 @@ function TreinoDetalhe({ treino, voltar }) {
                         <p className="descricao-view">
                             {descricao || <span className="descricao-vazia">Sem descrição</span>}
                         </p>
-                        
+
                     )}
                 </div>
 
@@ -408,7 +463,7 @@ function TreinoDetalhe({ treino, voltar }) {
             </div>
 
             <div className="divisor" />
-                    
+
             <div className="exercicios-header">
                 <div className="lista-exercicios">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -427,10 +482,10 @@ function TreinoDetalhe({ treino, voltar }) {
                             ))}
                         </SortableContext>
                     </DndContext> </div>
-                <p className="volume-total"> 
+                <p className="volume-total">
                     VOLUME TOTAL: {exercicios.reduce((acc, ex) => acc + ex.peso, 0)} KG</p>
             </div>
-                
+
             {modalExercicioDetalhe && (
                 <div className="modal-overlay">
                     <div className="modal">
@@ -454,7 +509,8 @@ function TreinoDetalhe({ treino, voltar }) {
                                 />
 
                                 <label>Descrição</label>
-                                <textarea
+                                <input
+                                    type="text"
                                     value={exercicioDraft.exercicio.descricao}
                                     onChange={(e) =>
                                         setExercicioDraft({
@@ -523,14 +579,40 @@ function TreinoDetalhe({ treino, voltar }) {
                                     }
                                 />
 
+                                <div className="file-input-container">
+                                    <span>Foto do exercício:</span>
+
+                                    <label htmlFor="fotoExercicioEditar" className="file-button">
+                                        Selecionar arquivo
+                                    </label>
+
+                                    <input
+                                        id="fotoExercicioEditar"
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                            const file = e.target.files[0];
+
+                                            if (!file) return;
+
+                                            setAvatarEditar(file);
+                                            setPreviewEditar(URL.createObjectURL(file));
+                                        }}
+                                    />
+
+                                    {previewEditar && (
+                                        <img
+                                            src={previewEditar}
+                                            alt="Preview"
+                                            className="preview"
+                                        />
+                                    )}
+                                </div>
+
                                 <div className="modal-botoes">
                                     <button
                                         className="btn-salvar"
-                                        onClick={() => {
-                                            salvarExercicio();
-                                            setEditandoExercicio(false);
-                                            setModalExercicioDetalhe(false);
-                                        }}
+                                        onClick={salvarExercicio}
                                     >
                                         Salvar
                                     </button>
@@ -539,6 +621,8 @@ function TreinoDetalhe({ treino, voltar }) {
                                         className="btn-cancelar"
                                         onClick={() => {
                                             setExercicioDraft(exercicioDetalhe);
+                                            setAvatarEditar(null);
+                                            setPreviewEditar(null);
                                             setEditandoExercicio(false);
                                         }}
                                     >
@@ -577,7 +661,15 @@ function TreinoDetalhe({ treino, voltar }) {
 
                                 <button
                                     className="btn-editar"
-                                    onClick={() => setEditandoExercicio(true)}
+                                    onClick={() => {
+                                        setPreviewEditar(
+                                            exercicioDraft.avatar
+                                                ? `http://localhost:8000/uploads/${exercicioDraft.avatar}`
+                                                : null
+                                        );
+                                        setAvatarEditar(null);
+                                        setEditandoExercicio(true);
+                                    }}
                                 >
                                     Editar
                                 </button>
@@ -625,7 +717,8 @@ function TreinoDetalhe({ treino, voltar }) {
                             onChange={(e) => setNomeExercicio(e.target.value)}
                         />
 
-                        <textarea
+                        <input
+                            tpye="text"
                             placeholder="Descrição"
                             value={exercicioDescricao}
                             onChange={(e) => setExercicioDescricao(e.target.value)}
@@ -668,6 +761,39 @@ function TreinoDetalhe({ treino, voltar }) {
                             value={exercicioPeso}
                             onChange={(e) => setExercicioPeso(e.target.value)}
                         />
+
+                        <div className="file-input-container">
+                            <span>Foto do exercício:</span>
+
+                            <label htmlFor="fotoExercicio" className="file-button">
+                                Selecionar arquivo
+                            </label>
+
+                            <input
+                                id="fotoExercicio"
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files[0];
+
+                                    if (!file) return;
+
+                                    setAvatar(file);
+                                    setPreview(URL.createObjectURL(file));
+                                }} 
+                            />
+
+                            {preview && (
+                                <img
+                                    src={preview}
+                                    alt="Preview"
+                                    className="preview"
+                                />
+                            )}
+                        </div>
+
+
+
 
                         <div className="botoes">
                             <button

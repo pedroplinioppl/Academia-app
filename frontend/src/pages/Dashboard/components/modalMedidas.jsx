@@ -43,6 +43,8 @@ function ModalMedidas({ onClose }) {
             peito: medidas.peito,
             cintura: medidas.cintura,
             quadril: medidas.quadril,
+            abdomen: medidas.abdomen,
+            ombro: medidas.ombro,
             braco: medidas.braco,
             antebraco: medidas.antebraco,
             coxa: medidas.coxa,
@@ -82,13 +84,15 @@ function ModalMedidas({ onClose }) {
     const campos = [
         { key: "peso", label: "Peso", unidade: "kg" },
         { key: "percentual_gordura", label: "% Gordura", unidade: "%" },
-        { key: "peito", label: "Peito", unidade: "cm" },
-        { key: "cintura", label: "Cintura", unidade: "cm" },
-        { key: "quadril", label: "Quadril", unidade: "cm" },
-        { key: "braco", label: "Braço", unidade: "cm" },
-        { key: "antebraco", label: "Antebraço", unidade: "cm" },
-        { key: "coxa", label: "Coxa", unidade: "cm" },
         { key: "panturrilha", label: "Panturrilha", unidade: "cm" },
+        { key: "coxa", label: "Coxa", unidade: "cm" },
+        { key: "quadril", label: "Quadril", unidade: "cm" },
+        { key: "cintura", label: "Cintura", unidade: "cm" },
+        { key: "abdomen", label: "Abdômen", unidade: "cm" },
+        { key: "peito", label: "Peito", unidade: "cm" },
+        { key: "braco", label: "Braço", unidade: "cm" }, 
+        { key: "antebraco", label: "Antebraço", unidade: "cm" },
+        { key: "ombro", label: "Ombro", unidade: "cm" },
     ];
 
     return (

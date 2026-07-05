@@ -58,9 +58,10 @@ function TreinoCard({ treino, onClick }) {
                     },
                 }
             );
-
-            alert("Treino publicado com sucesso!");
+            
+            setTreinoPublicado(true);
             setModalConfirmacao(false);
+
         } catch (err) {
             alert(err.response.data.detail);
         }
@@ -121,7 +122,9 @@ function TreinoCard({ treino, onClick }) {
                         <div className="modal-botoes">
                             <button
                                 className="btn-cancelar"
-                                onClick={() => setModalConfirmacao(false)}
+                                onClick={() => {
+                                    setModalConfirmacao(false);
+                                }}
                             >
                                 Cancelar
                             </button>

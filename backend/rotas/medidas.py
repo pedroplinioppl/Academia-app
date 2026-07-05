@@ -23,6 +23,8 @@ def buscar_medidas(
         return [{
             "peso": 0,
             "percentual_gordura": 0,
+            "ombro": 0,
+            "abdomen": 0,
             "peito": 0,
             "cintura": 0,
             "quadril": 0,
@@ -49,9 +51,11 @@ def adicionar_medida(
         percentual_gordura=medidas.percentual_gordura,
         peito=medidas.peito,
         cintura=medidas.cintura,
-        quadril=medidas.quadril,
+        quadril=medidas.quadril, 
         braco=medidas.braco,
         antebraco=medidas.antebraco,
+        ombro=medidas.ombro,
+        abdomen=medidas.abdomen,
         coxa=medidas.coxa,
         panturrilha=medidas.panturrilha,
         data_registro=medidas.data_registro

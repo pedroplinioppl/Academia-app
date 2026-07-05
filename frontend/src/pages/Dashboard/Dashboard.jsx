@@ -5,10 +5,14 @@ import "./Dashboard.css";
 import Perfil from "./components/Perfil";
 import Treinos from "./components/Treinos";
 import ModalMedidas from "./components/modalMedidas";
+import ModalEvolucao from "./components/modalEvolucao";
 import treinosPublicadosFoto from "../../assets/treinos publicados.png";
 
 function Dashboard() {
     const [mostrarModal, setMostrarModal] = useState(false);
+    const [sidebarOculta, setSidebarOculta] = useState(false);
+    const [mostrarEvolucao, setMostrarEvolucao] = useState(false);
+
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -21,9 +25,21 @@ function Dashboard() {
     return (
         <div className="dashboard">
 
-            <aside className="sidebar">
-                <Perfil />
+            <aside className={`sidebar ${sidebarOculta ? "sidebar--oculta" : ""}`}>
+                <div className="sidebar-inner">
+                    <Perfil />
+                </div>
             </aside>
+
+            <div className="sidebar-divider">
+                <button
+                    className="sidebar-toggle"
+                    onClick={() => setSidebarOculta(!sidebarOculta)}
+                    aria-label={sidebarOculta ? "Mostrar perfil" : "Esconder perfil"}
+                >
+                    <span className={`sidebar-toggle-icon ${sidebarOculta ? "girado" : ""}`}>‹</span>
+                </button>
+            </div>
 
             <main className="content">
                 <Treinos />
@@ -38,10 +54,12 @@ function Dashboard() {
                     Visualizar medidas
                 </button>
 
-                <button className="btn-bottom-right">
+                <button className="btn-bottom-right" onClick={() => setMostrarEvolucao(true)}>
                     Visualizar evolução
                 </button>
             </div>
+
+            {mostrarEvolucao && <ModalEvolucao onClose={() => setMostrarEvolucao(false)} />}
 
             {mostrarModal && (
                 <ModalMedidas

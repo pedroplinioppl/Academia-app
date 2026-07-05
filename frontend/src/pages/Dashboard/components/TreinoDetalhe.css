@@ -169,15 +169,47 @@
     border-radius: 12px;
 }
 
+.exercicio-esquerda {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    flex: 1;
+}
+
+.exercicio-imagem,
+.exercicio-imagem-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.exercicio-imagem {
+    object-fit: cover;
+}
+
+.exercicio-imagem-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    font-size: 1.1rem;
+}
+
 .exercicio-nome {
     font-size: 1rem;
     color: #222;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .exercicio-series {
     font-size: 1rem;
     color: #888;
     font-variant-numeric: tabular-nums;
+    flex-shrink: 0;
 }
 
 /* CARD DE TREINO */
@@ -459,4 +491,36 @@ select option[value=""] {
 .btn-privado.ativado {
     background: #64748b;
     color: #fff;
+}
+
+.file-input-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.file-input-container input[type="file"] {
+    display: none;
+}
+
+.file-button {
+    padding: 8px 16px;
+    background: #214555;
+    color: white !important;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 14px;
+    width: 100%;
+}
+
+.file-button:hover {
+    background: #214555cc;
+}
+
+.preview {
+    width: 120px;
+    border-radius: 8px;
+    margin-top: 10px;
 }

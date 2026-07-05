@@ -11,6 +11,7 @@ function TreinosPublicados() {
     const [treinos, setTreinos] = useState([]);
     const [carregando, setCarregando] = useState(true);
     const [treinoSelecionado, setTreinoSelecionado] = useState(null);
+    const [sidebarOculta, setSidebarOculta] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem("token");
@@ -33,10 +34,21 @@ function TreinosPublicados() {
 
     return (
         <div className="dashboard">
-            <aside
-                className="sidebar">
-                <Perfil />
+            <aside className={`sidebar ${sidebarOculta ? "sidebar--oculta" : ""}`}>
+                <div className="sidebar-inner">
+                    <Perfil />
+                </div>
             </aside>
+
+            <div className="sidebar-divider">
+                <button
+                    className="sidebar-toggle"
+                    onClick={() => setSidebarOculta(!sidebarOculta)}
+                    aria-label={sidebarOculta ? "Mostrar perfil" : "Esconder perfil"}
+                >
+                    <span className={`sidebar-toggle-icon ${sidebarOculta ? "girado" : ""}`}>‹</span>
+                </button>
+            </div>
 
             <main className="treinos-publicados-content">
                 <div className="treinos-publicados">

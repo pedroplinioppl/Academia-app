@@ -151,6 +151,8 @@ class TreinoExercicio(Base):
         String(500)
     )
 
+    avatar = Column(String(255), nullable=True)
+
     ordem = Column(
         Integer, 
         nullable=False,

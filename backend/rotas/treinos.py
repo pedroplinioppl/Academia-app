@@ -1,4 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+import shutil
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, UploadFile
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from schemas import TreinoCreate, ExercicioCreate
@@ -132,7 +135,8 @@ def get_treino(
                 "peso": te.peso,
                 "series": te.series,
                 "repeticoes": te.repeticoes,
-                "observacao": te.observacao
+                "observacao": te.observacao,
+                "avatar": te.avatar
             }
             for te in exercicios
         ]
@@ -323,6 +327,57 @@ def atualizar_exercicio(
     db.refresh(treino_exercicio.exercicio)  
     
     return treino_exercicio
+
+@router.post("/treinos/{treino_id}/exercicios/{treino_exercicio_id}/avatar")
+def atualizar_avatar_exercicio(
+    treino_id: int,
+    treino_exercicio_id: int,
+    file: UploadFile = File(...),
+    usuario_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    treino_exercicio = db.query(TreinoExercicio).join(Treino).filter(
+        TreinoExercicio.id == treino_exercicio_id,
+        TreinoExercicio.treino_id == treino_id,
+        Treino.usuario_id == usuario_id
+    ).first()
+
+    if not treino_exercicio:
+        raise HTTPException(
+            status_code=404,
+            detail="Exercício não encontrado"
+        )
+
+    if treino_exercicio.avatar:
+        caminho_antigo = os.path.join("uploads", treino_exercicio.avatar)
+
+        if os.path.exists(caminho_antigo):
+            os.remove(caminho_antigo)
+
+    extensao = file.filename.split(".")[-1]
+
+    nome_arquivo = f"avatar_{usuario_id}_te_{treino_exercicio_id}.{extensao}"
+
+    caminho = os.path.join(
+        "uploads",
+        nome_arquivo
+    )
+
+    with open(caminho, "wb") as buffer:
+        shutil.copyfileobj(
+            file.file,
+            buffer
+        )
+
+    treino_exercicio.avatar = nome_arquivo
+
+    db.commit()
+    db.refresh(treino_exercicio)
+
+    return {
+        "id": treino_exercicio.id,
+        "avatar": treino_exercicio.avatar
+    }
 
 @router.post("/treinos/{treino_id}/exercicios")
 def criar_exercicio(

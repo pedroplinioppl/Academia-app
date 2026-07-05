@@ -20,19 +20,23 @@ class Medida(Base):
 
     percentual_gordura = Column(Float)
 
-    peito = Column(Float)
+    panturrilha = Column(Float)
+
+    coxa = Column(Float)
+
+    quadril = Column(Float)
 
     cintura = Column(Float)
 
-    quadril = Column(Float)
+    abdomen = Column(Float)
+
+    peito = Column(Float) 
+
+    ombro = Column(Float)
 
     braco = Column(Float)
 
     antebraco = Column(Float)
-
-    coxa = Column(Float)
-
-    panturrilha = Column(Float)
 
     data_registro = Column(
         Date,

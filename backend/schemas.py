@@ -32,13 +32,15 @@ class ExercicioCreate(BaseModel):
     peso: float | None = None
 
 class MedidaCreate(BaseModel):
-    peso: float 
-    percentual_gordura: float
-    peito: float
-    cintura: float
-    quadril: float
-    braco: float 
-    antebraco: float 
-    coxa: float
-    panturrilha: float 
+    peso: float  | None = None
+    percentual_gordura: float | None = None
+    peito: float | None = None
+    cintura: float | None = None
+    quadril: float | None = None
+    braco: float | None = None
+    antebraco: float  | None = None
+    coxa: float | None = None
+    ombro: float | None = None 
+    abdomen: float | None = None
+    panturrilha: float | None = None
     data_registro: Date
