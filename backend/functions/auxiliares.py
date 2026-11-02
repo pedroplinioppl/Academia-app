@@ -1,21 +1,23 @@
-from datetime import timedelta
-
+import os
+from pathlib import Path
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
 from fastapi import Header, HTTPException
 from jose import jwt, JWTError
-import os
-from dotenv import load_dotenv
-from datetime import datetime
 from database import SessionLocal
 
-load_dotenv("venv/variaveis.env")
+env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+else:
+    load_dotenv()
 
 ALGORITHM = "HS256"
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = os.getenv("SECRET_KEY", "chave_padrao_para_desenvolvimento_trocar_em_producao")
 
 def get_current_user_id(
     authorization: str = Header(None)
 ):
-
     if not authorization:
         raise HTTPException(
             status_code=401,
@@ -23,11 +25,10 @@ def get_current_user_id(
         )
 
     try:
-
         token = authorization.replace(
             "Bearer ",
             ""
-        )
+        ).strip()
 
         payload = jwt.decode(
             token,
@@ -46,7 +47,6 @@ def get_current_user_id(
         return int(user_id)
 
     except JWTError:
-
         raise HTTPException(
             status_code=401,
             detail="Token inválido"

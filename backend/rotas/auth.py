@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from models import Usuario, Perfil
 from schemas import UsuarioCreate, UsuarioLogin
@@ -20,18 +20,6 @@ def criar_usuario(
         db: Session = Depends(get_db)
     ):
     
-    novo_usuario = Usuario(
-        email=usuario.email,
-        senha_hash=pwd_context.hash(usuario.senha)
-    )
-
-    #for usuario_existente in db.query(Usuario).all():
-    #    if pwd_context.verify(usuario.senha, usuario_existente.senha_hash):
-    #        raise HTTPException(
-    #            status_code=400,
-    #            detail="Senha já está em uso pelo usuário: {}".format(usuario_existente.email)
-    #        )
-
     # Verifica se o email já está em uso
     usuario_existente = db.query(Usuario).filter(Usuario.email == usuario.email).first()
     if usuario_existente:
@@ -39,8 +27,11 @@ def criar_usuario(
             status_code=400,
             detail="Email já está em uso"
         )
-    
 
+    novo_usuario = Usuario(
+        email=usuario.email,
+        senha_hash=pwd_context.hash(usuario.senha)
+    )
 
     db.add(novo_usuario)
     db.commit()
@@ -53,10 +44,6 @@ def criar_usuario(
 
     db.add(perfil)
     db.commit()
-    
-    db.add(novo_usuario)
-    db.commit()
-    db.refresh(novo_usuario)
 
     token = criar_token(novo_usuario.id)
 
@@ -71,7 +58,10 @@ def login_usuario(
     usuario_db = db.query(Usuario).filter(Usuario.email == usuario.email).first()
     
     if not usuario_db or not pwd_context.verify(usuario.senha, usuario_db.senha_hash):
-        return {"mensagem": "Credenciais inválidas"}
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciais inválidas"
+        )
     
     token = criar_token(usuario_db.id)
 

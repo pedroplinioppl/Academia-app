@@ -1,22 +1,22 @@
 import os
 import shutil
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from schemas import TreinoCreate, ExercicioCreate
 from models import Treino, Exercicio, TreinoDia, TreinoExercicio, PublicacaoTreino
 from functions.auxiliares import get_current_user_id, get_db
 
-
 router = APIRouter() 
+
+EXTENSOES_PERMITIDAS = {"png", "jpg", "jpeg", "webp"}
 
 @router.get("/treinos")
 def get_treinos(
     usuario_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-
     treinos = db.query(Treino).filter(
         Treino.usuario_id == usuario_id
     ).order_by(Treino.ordem).all()
@@ -31,10 +31,9 @@ def criar_treino(
 ):
     if not treino.nome:
         raise HTTPException(
-            status_code=404,
+            status_code=400,
             detail="Nome de treino é obrigatório"
         )
-
 
     max_ordem = db.query(func.max(Treino.ordem)).filter(
         Treino.usuario_id == usuario_id
@@ -65,7 +64,9 @@ def get_treinos_publicados(
     resultado = []
     for pub in publicacoes:
         treino = pub.treino
-        autor_perfil = treino.usuario.perfil
+        if not treino:
+            continue
+        autor_perfil = treino.usuario.perfil if treino.usuario else None
 
         resultado.append({
             "publicacao_id": pub.id,
@@ -74,13 +75,25 @@ def get_treinos_publicados(
             "descricao": treino.descricao,
             "data_publicacao": pub.data_publicacao,
             "autor": {
-                "id": autor_perfil.id,
-                "nome": autor_perfil.nome,
-                "avatar": autor_perfil.avatar
+                "id": autor_perfil.id if autor_perfil else None,
+                "nome": autor_perfil.nome if autor_perfil else "Usuário",
+                "avatar": autor_perfil.avatar if autor_perfil else None
             }
         })
 
     return resultado
+
+@router.get("/treinos/meus-publicados")
+def meus_treinos_publicados(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id)
+):
+    treinos = db.query(Treino).join(PublicacaoTreino).filter(
+        PublicacaoTreino.treino_id == Treino.id,
+        Treino.usuario_id == user_id
+    ).all()
+
+    return treinos
 
 @router.get("/treinos/{treino_id}")
 def get_treino(
@@ -88,8 +101,6 @@ def get_treino(
     usuario_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-
-
     treino = (
         db.query(Treino)
         .filter(
@@ -149,8 +160,6 @@ def atualizar_treino(
     usuario_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-
-
     treino_existente = db.query(Treino).filter(
         Treino.id == treino_id,
         Treino.usuario_id == usuario_id
@@ -169,13 +178,14 @@ def atualizar_treino(
         TreinoDia.treino_id == treino_id
     ).delete()
 
-    for dia in treino.dias:
-        db.add(
-            TreinoDia(
-                treino_id=treino_id,
-                dia_semana=dia
+    if treino.dias:
+        for dia in treino.dias:
+            db.add(
+                TreinoDia(
+                    treino_id=treino_id,
+                    dia_semana=dia
+                )
             )
-        )
 
     db.commit()
     db.refresh(treino_existente)
@@ -188,12 +198,7 @@ def deletar_treino(
     usuario_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    
-    # Apaga todas as publicações relacionadas a esse treino
-    db.query(PublicacaoTreino).filter(
-        PublicacaoTreino.treino_id == treino_id
-    ).delete()
-
+    # Verifica permissão do treino ANTES de deletar publicações
     treino = db.query(Treino).filter(
         Treino.id == treino_id,
         Treino.usuario_id == usuario_id
@@ -204,6 +209,11 @@ def deletar_treino(
             status_code=404,
             detail="Treino não encontrado"
         )
+
+    # Apaga publicações associadas a este treino
+    db.query(PublicacaoTreino).filter(
+        PublicacaoTreino.treino_id == treino_id
+    ).delete()
 
     db.delete(treino)
     db.commit()
@@ -216,7 +226,19 @@ def publicar_treino(
         user_id: int = Depends(get_current_user_id),
         db: Session = Depends(get_db)
 ):
-    #Verifica se o treino já foi publicado 
+    # Verifica se o treino pertence ao usuário
+    treino = db.query(Treino).filter(
+        Treino.id == treino_id,
+        Treino.usuario_id == user_id
+    ).first()
+
+    if not treino:
+        raise HTTPException(
+            status_code=404,
+            detail="Treino não encontrado"
+        )
+
+    # Verifica se o treino já foi publicado
     publicacao = db.query(PublicacaoTreino).filter(
         PublicacaoTreino.treino_id == treino_id
     ).first()
@@ -226,28 +248,16 @@ def publicar_treino(
             status_code=400,
             detail="Treino já foi publicado"
         )
-    else:
-        #Verifica se o treino pertence ao usuário
-        treino = db.query(Treino).filter(
-            Treino.id == treino_id,
-            Treino.usuario_id == user_id
-        ).first()
 
-        if not treino:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Treino não encontrado: {user_id} - {treino_id}"
-            )
+    nova_publicacao = PublicacaoTreino(
+        treino_id=treino_id
+    )
 
-        nova_publicacao = PublicacaoTreino(
-            treino_id=treino_id
-        )
+    db.add(nova_publicacao)
+    db.commit()
+    db.refresh(nova_publicacao)
 
-        db.add(nova_publicacao)
-        db.commit()
-        db.refresh(nova_publicacao)
-
-        return {"message": "Treino publicado com sucesso"}
+    return {"message": "Treino publicado com sucesso"}
 
 @router.delete("/treinos/{treino_id}/publicar")
 def despublicar_treino(
@@ -255,6 +265,18 @@ def despublicar_treino(
         user_id: int = Depends(get_current_user_id),
         db: Session = Depends(get_db)
 ):
+    # Verifica se o treino pertence ao usuário
+    treino = db.query(Treino).filter(
+        Treino.id == treino_id,
+        Treino.usuario_id == user_id
+    ).first()
+
+    if not treino:
+        raise HTTPException(
+            status_code=404,
+            detail="Treino não encontrado"
+        )
+
     publicacao = db.query(PublicacaoTreino).filter(
         PublicacaoTreino.treino_id == treino_id
     ).first()
@@ -264,47 +286,22 @@ def despublicar_treino(
             status_code=400,
             detail="Treino não está publicado"
         )
-    else:
-        #Verifica se o treino pertence ao usuário
-        treino = db.query(Treino).filter(
-            Treino.id == treino_id,
-            Treino.usuario_id == user_id
-        ).first()
 
-        if not treino:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Treino não encontrado: {user_id} - {treino_id}"
-            )
+    db.delete(publicacao)
+    db.commit()
 
-        db.delete(publicacao)
-        db.commit()
-
-        return {"message": "Treino despublicado com sucesso"}
-
-@router.get("/treinos/publicados")
-def meus_treinos_publicados(
-    db: Session = Depends(get_db),
-    user_id: int = Depends(get_current_user_id)
-):
-    treinos = db.query(Treino).join(PublicacaoTreino).filter(
-        PublicacaoTreino.treino_id == Treino.id,
-        Treino.usuario_id == user_id
-    ).all()
-
-    return treinos
+    return {"message": "Treino despublicado com sucesso"}
 
 @router.put("/treinos/{treino_id}/exercicios/{treino_exercicio_id}")
 def atualizar_exercicio(
     treino_id: int,
     exercicio: ExercicioCreate,
-    treino_exercicio_id: int,          # ← renomeia pra ficar claro
+    treino_exercicio_id: int,
     usuario_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    
     treino_exercicio = db.query(TreinoExercicio).join(Treino).filter(
-        TreinoExercicio.id == treino_exercicio_id,  # ← filtra pelo ID do TreinoExercicio
+        TreinoExercicio.id == treino_exercicio_id,
         TreinoExercicio.treino_id == treino_id,
         Treino.usuario_id == usuario_id
     ).first()
@@ -348,20 +345,31 @@ def atualizar_avatar_exercicio(
             detail="Exercício não encontrado"
         )
 
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Arquivo inválido"
+        )
+
+    extensao = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if extensao not in EXTENSOES_PERMITIDAS:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato de imagem não suportado. Use PNG, JPG, JPEG ou WEBP."
+        )
+
+    os.makedirs("uploads", exist_ok=True)
+
     if treino_exercicio.avatar:
-        caminho_antigo = os.path.join("uploads", treino_exercicio.avatar)
-
+        caminho_antigo = os.path.join("uploads", os.path.basename(treino_exercicio.avatar))
         if os.path.exists(caminho_antigo):
-            os.remove(caminho_antigo)
-
-    extensao = file.filename.split(".")[-1]
+            try:
+                os.remove(caminho_antigo)
+            except OSError:
+                pass
 
     nome_arquivo = f"avatar_{usuario_id}_te_{treino_exercicio_id}.{extensao}"
-
-    caminho = os.path.join(
-        "uploads",
-        nome_arquivo
-    )
+    caminho = os.path.join("uploads", nome_arquivo)
 
     with open(caminho, "wb") as buffer:
         shutil.copyfileobj(
@@ -386,7 +394,6 @@ def criar_exercicio(
     usuario_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-
     treino = db.query(Treino).filter(
         Treino.id == treino_id,
         Treino.usuario_id == usuario_id
@@ -480,6 +487,7 @@ def reordenar_exercicios(
             exercicio.ordem = index
 
     db.commit()
+    return {"message": "Exercícios reordenados com sucesso"}
 
 @router.patch("/treino/reordenar")
 def reordenar_treinos(
@@ -500,3 +508,4 @@ def reordenar_treinos(
             treinos_por_id[treino_id].ordem = index
 
     db.commit()
+    return {"message": "Treinos reordenados com sucesso"}

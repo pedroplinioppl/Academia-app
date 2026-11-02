@@ -8,13 +8,14 @@ from functions.auxiliares import get_current_user_id, get_db
 
 router = APIRouter()
 
+EXTENSOES_PERMITIDAS = {"png", "jpg", "jpeg", "webp"}
+
 @router.post("/perfil/avatar")
 async def upload_avatar(
     file: UploadFile = File(...),
     usuario_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-
     perfil = db.query(Perfil).filter(
         Perfil.usuario_id == usuario_id
     ).first()
@@ -24,21 +25,32 @@ async def upload_avatar(
             status_code=404,
             detail="Perfil não encontrado"
         )
-    
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Arquivo inválido"
+        )
+
+    extensao = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else ""
+    if extensao not in EXTENSOES_PERMITIDAS:
+        raise HTTPException(
+            status_code=400,
+            detail="Formato de imagem não suportado. Use PNG, JPG, JPEG ou WEBP."
+        )
+
+    os.makedirs("uploads", exist_ok=True)
+
     if perfil.avatar:
-        caminho_antigo = os.path.join("uploads", perfil.avatar)
-
+        caminho_antigo = os.path.join("uploads", os.path.basename(perfil.avatar))
         if os.path.exists(caminho_antigo):
-            os.remove(caminho_antigo)
-
-    extensao = file.filename.split(".")[-1]
+            try:
+                os.remove(caminho_antigo)
+            except OSError:
+                pass
 
     nome_arquivo = f"avatar_{usuario_id}.{extensao}"
-
-    caminho = os.path.join(
-        "uploads",
-        nome_arquivo
-    )
+    caminho = os.path.join("uploads", nome_arquivo)
 
     with open(caminho, "wb") as buffer:
         shutil.copyfileobj(
@@ -47,7 +59,6 @@ async def upload_avatar(
         )
 
     perfil.avatar = nome_arquivo
-
     db.commit()
 
     return {
@@ -60,7 +71,6 @@ def buscar_perfil(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-
     perfil = db.query(
         Perfil
     ).filter(
@@ -75,7 +85,6 @@ def atualizar_perfil(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-
     perfil = (
         db.query(Perfil)
         .filter(Perfil.usuario_id == user_id)
