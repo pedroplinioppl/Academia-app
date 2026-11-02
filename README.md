@@ -8,12 +8,12 @@ Permite que você:
 - Acompanhe sua evolução física registrando medidas corporais.
 
 ---
-
+ 
 ## 🛠️ Tecnologias Utilizadas
 
-- **Backend:** Python 3, [FastAPI](https://fastapi.tiangolo.com/), [SQLAlchemy](https://www.sqlalchemy.org/), [Uvicorn](https://www.uvicorn.org/), JWT (python-jose), Passlib (bcrypt).
-- **Banco de Dados:** PostgreSQL (ou SQLite para desenvolvimento local rápido).
-- **Frontend:** React, Vite, Axios, @dnd-kit (arrastar e soltar).
+- **Backend:** Python, FastAPI, SQLAlchemy, Uvicorn, JWT, Passlib (bcrypt).
+- **Banco de Dados:** PostgreSQL
+- **Frontend:** React, Vite, Axios
 
 ---
 
@@ -22,7 +22,7 @@ Permite que você:
 ### Pré-requisitos
 - Python 3.10 ou superior
 - Node.js 18 ou superior e npm
-- PostgreSQL (opcional, por padrão em desenvolvimento pode utilizar SQLite)
+- PostgreSQL (Em desenvolvimento da pra substituir por sqllite)
 
 ---
 
@@ -31,9 +31,7 @@ Permite que você:
 1. Crie e ative um ambiente virtual:
    ```bash
    python -m venv venv
-   # No Linux/macOS:
-   source venv/bin/activate
-   # No Windows:
+
    venv\Scripts\activate
    ```
 
@@ -82,9 +80,5 @@ Permite que você:
    O frontend estará acessível em `http://localhost:5173`.
 
 ---
-
-## 🔒 Segurança e Boas Práticas
-
-- Nunca comite arquivos `.env` contendo senhas e segredos de produção no Git.
 - Todos os uploads de arquivos são validados quanto à extensão para impedir upload de arquivos executáveis maliciosos.
 - As senhas dos usuários são protegidas com hash seguro via bcrypt.
